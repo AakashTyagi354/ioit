@@ -1,15 +1,15 @@
+import dotenv from "dotenv";
 import express from "express";
-
+import mongoose from "mongoose";
+import { connectDB } from "./utils/db.js";
+dotenv.config();
 const app = express();
+app.use(express.json());
 
-const port = 4000;
+//connected  to the database
+connectDB();
 
-app.get("/test", (req, res) => {
-  res.send({
-    message: "hello world",
-  });
-});
-
+const port = process.env.PORT;
 app.listen(port, () => {
-  console.log("listening on port");
+  console.log("listening on port " + port);
 });

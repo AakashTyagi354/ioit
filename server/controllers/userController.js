@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import Data from "../models/data.mdel.js";
 import jwt from "jsonwebtoken";
+import { sendToken } from "../utils/jwtToken.js";
 
 //User register
 
@@ -16,7 +17,7 @@ export const registerUser = async (req, res, next) => {
     });
   }
 
-  const isRegistered = await User.findOne({ email, password });
+  const isRegistered = await User.findOne({ email });
 
   if (isRegistered) {
     return res.status(400).json({
@@ -33,20 +34,21 @@ export const registerUser = async (req, res, next) => {
     PRN,
   });
 
-  const token = user.getJWTToken();
-
-  res.status(200).json({
-    success: true,
-    message: "User registered successfully",
-    token,
-  });
+  sendToken(user, 200, res);
 };
 
 //User Login
 export const userLogin = async (req, res, next) => {
   const { email, password, PRN } = req.body;
 
-  const user = await User.findOne({ email, password, PRN });
+  if (!email || !password || !PRN) {
+    return res.status(400).json({
+      success: false,
+      message: "Please enter email ,password and PRN",
+    });
+  }
+
+  const user = await User.findOne({ email, PRN });
 
   if (!user) {
     return res.status(400).json({
@@ -54,11 +56,13 @@ export const userLogin = async (req, res, next) => {
       message: "Invalid User",
     });
   }
-  const token = user.getJWTToken();
+  const isPasswordMatched = await user.comparePassword(password);
+  if (!isPasswordMatched) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid email or password",
+    });
+  }
 
-  res.status(200).json({
-    success: true,
-    message: "User logged in",
-    token,
-  });
+  sendToken(user, 200, res);
 };
